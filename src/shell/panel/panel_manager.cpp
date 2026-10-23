@@ -1728,9 +1728,15 @@ void PanelManager::togglePanel(const std::string& panelId) {
 }
 
 bool PanelManager::onPointerEvent(const PointerEvent& event) {
+  const bool ignorePointer = (m_activePanel != nullptr && m_activePanel->ignorePointerEvent());
+
   // A context menu may belong to a persistent plugin panel, for which the
   // ordinary single-panel host is closed. Route the grabbing popup first.
   if (m_activePopup != nullptr) {
+    const bool onPopup = (event.surface != nullptr && event.surface == m_activePopup->wlSurface());
+    if (ignorePointer && onPopup) {
+      return true;
+    }
     if (m_activePopup->onPointerEvent(event)) {
       return true;
     }
@@ -1749,6 +1755,10 @@ bool PanelManager::onPointerEvent(const PointerEvent& event) {
   }
 
   if (m_selectPopup != nullptr && m_selectPopup->isSelectDropdownOpen()) {
+    const bool onSelect = (event.surface != nullptr && event.surface == m_selectPopup->wlSurface());
+    if (ignorePointer && onSelect) {
+      return true;
+    }
     if (m_selectPopup->onPointerEvent(event)) {
       return true;
     }
@@ -1773,19 +1783,23 @@ bool PanelManager::onPointerEvent(const PointerEvent& event) {
   case PointerEvent::Type::Enter: {
     if (event.surface == m_wlSurface) {
       m_pointerInside = true;
-      m_inputDispatcher.pointerEnter(static_cast<float>(event.sx), static_cast<float>(event.sy), event.serial);
+      if (!ignorePointer) {
+        m_inputDispatcher.pointerEnter(static_cast<float>(event.sx), static_cast<float>(event.sy), event.serial);
+      }
     }
     break;
   }
   case PointerEvent::Type::Leave: {
     if (event.surface == m_wlSurface) {
       m_pointerInside = false;
-      m_inputDispatcher.pointerLeave();
+      if (!ignorePointer) {
+        m_inputDispatcher.pointerLeave();
+      }
     }
     break;
   }
   case PointerEvent::Type::Motion: {
-    if (!m_pointerInside) {
+    if (!m_pointerInside || ignorePointer) {
       return false;
     }
     m_inputDispatcher.pointerMotion(static_cast<float>(event.sx), static_cast<float>(event.sy), 0);
@@ -1801,6 +1815,9 @@ bool PanelManager::onPointerEvent(const PointerEvent& event) {
     }
 
     if (m_pointerInside) {
+      if (ignorePointer) {
+        return true;
+      }
       if (pressed && event.surface == m_wlSurface && m_inputDispatcher.hoveredArea() == nullptr) {
         if (m_activePanel != nullptr && m_activePanel->dismissTransientUi()) {
           refresh();
@@ -1815,7 +1832,7 @@ bool PanelManager::onPointerEvent(const PointerEvent& event) {
     break;
   }
   case PointerEvent::Type::Axis: {
-    if (!m_pointerInside) {
+    if (!m_pointerInside || ignorePointer) {
       return false;
     }
     m_inputDispatcher.pointerAxis(
@@ -2026,13 +2043,18 @@ void PanelManager::endAttachedPopup(wl_surface* surface) {
   }
   m_pointerInside =
       m_platform != nullptr && m_platform->hasPointerPosition() && m_platform->lastPointerSurface() == m_wlSurface;
+  const bool ignorePointer = (m_activePanel != nullptr && m_activePanel->ignorePointerEvent());
   if (m_pointerInside) {
-    m_inputDispatcher.pointerEnter(
-        static_cast<float>(m_platform->lastPointerX()), static_cast<float>(m_platform->lastPointerY()),
-        m_platform->lastInputSerial()
-    );
+    if (!ignorePointer) {
+      m_inputDispatcher.pointerEnter(
+          static_cast<float>(m_platform->lastPointerX()), static_cast<float>(m_platform->lastPointerY()),
+          m_platform->lastInputSerial()
+      );
+    }
   } else {
-    m_inputDispatcher.pointerLeave();
+    if (!ignorePointer) {
+      m_inputDispatcher.pointerLeave();
+    }
   }
   requestRedraw();
 }
@@ -2766,7 +2788,7 @@ void PanelManager::buildScene(std::uint32_t width, std::uint32_t height) {
     layoutActivePanel(renderer);
   }
   applyPendingPanelFocus();
-  if (m_pointerInside) {
+  if (m_pointerInside && (m_activePanel == nullptr || !m_activePanel->ignorePointerEvent())) {
     m_inputDispatcher.syncPointerHover();
   }
 }
@@ -2981,7 +3003,7 @@ void PanelManager::prepareFrame(bool needsUpdate, bool needsLayout) {
     if (m_activePanel != nullptr) {
       layoutActivePanel(renderer);
     }
-    if (m_pointerInside) {
+    if (m_pointerInside && (m_activePanel == nullptr || !m_activePanel->ignorePointerEvent())) {
       m_inputDispatcher.syncPointerHover();
     }
   }
