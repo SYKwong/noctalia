@@ -81,14 +81,23 @@ namespace notification_grouping {
     return i18n::tr("control-center.notifications.untitled");
   }
 
-  bool pruneGroups(std::vector<AppNotificationGroup>& groups, const std::function<bool(uint32_t)>& isVanished) {
+  bool pruneGroups(
+      std::vector<AppNotificationGroup>& groups, const std::function<bool(uint32_t)>& isVanished,
+      std::unordered_set<std::string>* expandedAppKeys
+  ) {
     bool changed = false;
     for (auto it = groups.begin(); it != groups.end();) {
       const bool groupChanged = std::erase_if(it->notificationIds, isVanished) > 0;
       changed = changed || groupChanged;
       if (it->notificationIds.empty()) {
+        if (expandedAppKeys != nullptr) {
+          expandedAppKeys->erase(it->appKey);
+        }
         it = groups.erase(it);
         continue;
+      }
+      if (it->notificationIds.size() == 1 && expandedAppKeys != nullptr) {
+        expandedAppKeys->erase(it->appKey);
       }
       if (groupChanged) {
         it->representativeId = it->notificationIds.front();
@@ -110,6 +119,8 @@ namespace notification_grouping {
               .representativeId = group.representativeId,
               .notificationCount = 1,
               .collapsed = false,
+              .isGroupParent = false,
+              .hasAppHeader = false,
           }
       );
     }
@@ -124,6 +135,8 @@ namespace notification_grouping {
               .representativeId = group.representativeId,
               .notificationCount = group.notificationIds.size(),
               .collapsed = true,
+              .isGroupParent = false,
+              .hasAppHeader = false,
           }
       );
     }
@@ -137,6 +150,8 @@ namespace notification_grouping {
               .representativeId = group.representativeId,
               .notificationCount = group.notificationIds.size(),
               .collapsed = false,
+              .isGroupParent = false,
+              .hasAppHeader = false,
           }
       );
       for (std::size_t i = 0; i < group.notificationIds.size(); ++i) {
@@ -151,6 +166,7 @@ namespace notification_grouping {
                 .notificationCount = group.notificationIds.size(),
                 .collapsed = false,
                 .isGroupParent = (i == 0),
+                .hasAppHeader = true,
             }
         );
       }
@@ -161,6 +177,16 @@ namespace notification_grouping {
   std::vector<HistoryRowItem> buildVisualRows(
       const std::vector<AppNotificationGroup>& groups, std::unordered_set<std::string>& expandedAppKeys, bool groupByApp
   ) {
+    std::unordered_set<std::string> liveMultiItemKeys;
+    if (groupByApp) {
+      for (const auto& group : groups) {
+        if (group.notificationIds.size() > 1) {
+          liveMultiItemKeys.insert(group.appKey);
+        }
+      }
+    }
+    std::erase_if(expandedAppKeys, [&](const std::string& key) { return !liveMultiItemKeys.contains(key); });
+
     std::vector<HistoryRowItem> rows;
     if (!groupByApp) {
       for (const auto& group : groups) {
@@ -174,6 +200,8 @@ namespace notification_grouping {
                   .representativeId = id,
                   .notificationCount = 1,
                   .collapsed = false,
+                  .isGroupParent = false,
+                  .hasAppHeader = false,
               }
           );
         }
@@ -187,7 +215,6 @@ namespace notification_grouping {
       }
 
       if (group.notificationIds.size() == 1) {
-        expandedAppKeys.erase(group.appKey);
         appendSingleNotificationRow(rows, group);
       } else if (!expandedAppKeys.contains(group.appKey)) {
         appendCollapsedStackRow(rows, group);
@@ -408,7 +435,7 @@ namespace {
 
   NotificationCardMetrics measureNotificationCard(
       Renderer& renderer, const NotificationHistoryEntry& entry, float scale, float width, bool expandedRequested,
-      bool showHistoryActions, bool isStackedCard = false
+      bool showHistoryActions, bool isStackedCard = false, bool showAppName = true
   ) {
     NotificationCardMetrics metrics;
     const float cardWidth = std::max(0.0F, width);
@@ -452,9 +479,12 @@ namespace {
     const float badgeExtra = isStackedCard ? ((kStackBadgeEstimatedWidth + Style::spaceSm) * scale) : 0.0F;
     metrics.metaTextWidth = std::max(0.0F, leftClusterWidth - iconColumn - badgeExtra);
 
-    metrics.metaLine = relativeMetaLine(entry.notification);
-    if (entry.notification.category.has_value() && !entry.notification.category->empty()) {
-      metrics.metaLine = *entry.notification.category + " • " + metrics.metaLine;
+    const std::string relativeTime = relativeMetaLine(entry.notification);
+    if (showAppName) {
+      const std::string appName = notificationDisplayAppName(entry.notification);
+      metrics.metaLine = appName.empty() ? relativeTime : appName + " • " + relativeTime;
+    } else {
+      metrics.metaLine = relativeTime;
     }
 
     const float metaHeight = measuredTextHeight(
@@ -718,7 +748,7 @@ namespace {
     }
 
   public:
-    explicit NotificationHistoryRow(float scale, float fillOpacity) : m_scale(scale), m_fillOpacity(fillOpacity) {
+    explicit NotificationHistoryRow(float scale, float fillOpacity) : m_scale(scale) {
       setFillWidth(true);
       setDirection(FlexDirection::Vertical);
       setAlign(FlexAlign::Stretch);
@@ -763,7 +793,7 @@ namespace {
 
     void bindHeader(
         Renderer& renderer, const HistoryRowItem& row, const NotificationHistoryEntry* repEntry, float width,
-        IconResolver& iconResolver, std::function<void(const std::string&)> onToggleExpanded,
+        IconResolver& iconResolver, const std::function<void(const std::string&)>& onToggleExpanded,
         std::function<void(const std::string&)> onClear
     ) {
       if (m_imageKind != ImageKind::None) {
@@ -809,11 +839,11 @@ namespace {
       m_headerTitle->measure(renderer);
 
       m_headerClear->setTooltip(i18n::tr("control-center.notifications.clear-app", "app", row.appDisplayName));
-      m_headerClear->setOnClick([onClear = std::move(onClear), appKey = row.appKey]() { onClear(appKey); });
+      m_headerClear->setOnClick([onClear = std::move(onClear), appKey = row.appKey] { onClear(appKey); });
 
       m_headerChevron->setGlyph("chevron-up");
       m_headerChevron->setTooltip(i18n::tr("control-center.notifications.collapse-group", "app", row.appDisplayName));
-      m_headerChevron->setOnClick([onToggleExpanded, appKey = row.appKey]() { onToggleExpanded(appKey); });
+      m_headerChevron->setOnClick([onToggleExpanded, appKey = row.appKey] { onToggleExpanded(appKey); });
     }
 
     void bindNotification(
@@ -836,8 +866,10 @@ namespace {
       m_isStackedCard = (row.kind == HistoryRowItem::Kind::StackedCard);
       m_shelf2Visible = m_isStackedCard && (row.notificationCount >= 3);
 
-      const NotificationCardMetrics metrics =
-          measureNotificationCard(renderer, entry, m_scale, width, expanded, showHistoryActions, m_isStackedCard);
+      const bool showAppName = !row.hasAppHeader;
+      const NotificationCardMetrics metrics = measureNotificationCard(
+          renderer, entry, m_scale, width, expanded, showHistoryActions, m_isStackedCard, showAppName
+      );
 
       const float shelfExtra =
           m_isStackedCard ? (m_shelf2Visible ? kStackShelf2Offset : kStackShelf1Offset) * m_scale : 0.0F;
@@ -1120,7 +1152,6 @@ namespace {
     }
 
     float m_scale = 1.0F;
-    float m_fillOpacity = 1.0F;
 
     bool m_isStackedCard = false;
     bool m_shelf2Visible = false;
@@ -1227,8 +1258,11 @@ public:
     const bool showHistoryActions = !isStackedCard
         && m_owner.m_notifications != nullptr
         && m_owner.m_notifications->hasPendingDBusClose(entry.notification.id);
-    const float cardH =
-        measureNotificationCard(renderer, entry, m_scale, width, expanded, showHistoryActions, isStackedCard).height;
+    const bool showAppName = !row.hasAppHeader;
+    const float cardH = measureNotificationCard(
+                            renderer, entry, m_scale, width, expanded, showHistoryActions, isStackedCard, showAppName
+    )
+                            .height;
     if (isStackedCard) {
       const float shelfExtra = (row.notificationCount >= 3 ? kStackShelf2Offset : kStackShelf1Offset) * m_scale;
       return cardH + shelfExtra;
@@ -1894,7 +1928,7 @@ void NotificationsTab::dropVanishedFiltered() {
     return;
   }
   const auto vanished = [this](uint32_t id) { return m_notifications->findHistoryEntry(id) == nullptr; };
-  if (notification_grouping::pruneGroups(m_appGroups, vanished)) {
+  if (notification_grouping::pruneGroups(m_appGroups, vanished, &m_expandedAppKeys)) {
     rebuildVisualRows();
     if (m_list != nullptr) {
       m_list->notifyDataChanged();

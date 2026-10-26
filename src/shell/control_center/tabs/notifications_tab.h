@@ -32,7 +32,10 @@ namespace notification_grouping {
   [[nodiscard]] std::string normalizeAppKey(std::string_view key);
   [[nodiscard]] std::string groupKey(const Notification& notification);
   [[nodiscard]] std::string groupDisplayName(const Notification& notification);
-  bool pruneGroups(std::vector<AppNotificationGroup>& groups, const std::function<bool(uint32_t)>& isVanished);
+  bool pruneGroups(
+      std::vector<AppNotificationGroup>& groups, const std::function<bool(uint32_t)>& isVanished,
+      std::unordered_set<std::string>* expandedAppKeys = nullptr
+  );
   [[nodiscard]] std::vector<HistoryRowItem> buildVisualRows(
       const std::vector<AppNotificationGroup>& groups, std::unordered_set<std::string>& expandedAppKeys,
       bool groupByApp = true
@@ -63,6 +66,7 @@ struct HistoryRowItem {
   std::size_t notificationCount = 0;
   bool collapsed = false;
   bool isGroupParent = false;
+  bool hasAppHeader = false;
 };
 
 class NotificationsTab : public Tab {

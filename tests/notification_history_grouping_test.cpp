@@ -72,6 +72,7 @@ namespace {
     TEST_CHECK(rows[0].notificationId == 2);
     TEST_CHECK(rows[0].notificationCount == 2);
     TEST_CHECK(rows[0].collapsed);
+    TEST_CHECK(!rows[0].hasAppHeader);
     TEST_CHECK(notification_grouping::isRowStackToggleInteractive(rows[0]));
 
     TEST_CHECK(rows[1].kind == HistoryRowItem::Kind::Notification);
@@ -79,6 +80,7 @@ namespace {
     TEST_CHECK(rows[1].notificationId == 3);
     TEST_CHECK(rows[1].notificationCount == 1);
     TEST_CHECK(!rows[1].isGroupParent);
+    TEST_CHECK(!rows[1].hasAppHeader);
     TEST_CHECK(!notification_grouping::isRowStackToggleInteractive(rows[1]));
 
     // Expand Slack -> AppHeader + 2 notifications (first is group parent), Firefox remains single Notification
@@ -90,27 +92,33 @@ namespace {
     TEST_CHECK(rows[0].appKey == "slack");
     TEST_CHECK(rows[0].notificationCount == 2);
     TEST_CHECK(!rows[0].collapsed);
+    TEST_CHECK(!rows[0].hasAppHeader);
     TEST_CHECK(notification_grouping::isRowStackToggleInteractive(rows[0]));
 
     TEST_CHECK(rows[1].kind == HistoryRowItem::Kind::Notification);
     TEST_CHECK(rows[1].notificationId == 2);
     TEST_CHECK(rows[1].isGroupParent);
+    TEST_CHECK(rows[1].hasAppHeader);
     TEST_CHECK(notification_grouping::isRowStackToggleInteractive(rows[1]));
 
     TEST_CHECK(rows[2].kind == HistoryRowItem::Kind::Notification);
     TEST_CHECK(rows[2].notificationId == 1);
     TEST_CHECK(!rows[2].isGroupParent);
+    TEST_CHECK(rows[2].hasAppHeader);
     TEST_CHECK(!notification_grouping::isRowStackToggleInteractive(rows[2]));
 
     TEST_CHECK(rows[3].kind == HistoryRowItem::Kind::Notification);
     TEST_CHECK(rows[3].notificationId == 3);
     TEST_CHECK(!rows[3].isGroupParent);
+    TEST_CHECK(!rows[3].hasAppHeader);
     TEST_CHECK(!notification_grouping::isRowStackToggleInteractive(rows[3]));
 
-    // Shrinking a group to 1 item prunes its key from expandedKeys
+    // Shrinking a group to 1 item or having stale keys for missing groups prunes them from expandedKeys
     expandedKeys.insert("firefox");
+    expandedKeys.insert("phantom_app");
     rows = notification_grouping::buildVisualRows(groups, expandedKeys);
     TEST_CHECK(!expandedKeys.contains("firefox"));
+    TEST_CHECK(!expandedKeys.contains("phantom_app"));
 
     // Disabling groupByApp emits flat Notification rows without headers or stack parent flags
     rows = notification_grouping::buildVisualRows(groups, expandedKeys, false);
@@ -118,13 +126,17 @@ namespace {
     TEST_CHECK(rows[0].kind == HistoryRowItem::Kind::Notification);
     TEST_CHECK(rows[0].notificationId == 2);
     TEST_CHECK(!rows[0].isGroupParent);
+    TEST_CHECK(!rows[0].hasAppHeader);
     TEST_CHECK(!notification_grouping::isRowStackToggleInteractive(rows[0]));
     TEST_CHECK(rows[1].kind == HistoryRowItem::Kind::Notification);
     TEST_CHECK(rows[1].notificationId == 1);
     TEST_CHECK(!rows[1].isGroupParent);
+    TEST_CHECK(!rows[1].hasAppHeader);
     TEST_CHECK(rows[2].kind == HistoryRowItem::Kind::Notification);
     TEST_CHECK(rows[2].notificationId == 3);
     TEST_CHECK(!rows[2].isGroupParent);
+    TEST_CHECK(!rows[2].hasAppHeader);
+    TEST_CHECK(expandedKeys.empty());
   }
 
   void testPruneGroupsUpdatesRepresentativeAndErasesEmpty() {
@@ -160,8 +172,10 @@ namespace {
     TEST_CHECK(groups[0].representativeId == 5);
 
     // Newest Slack entry (5) and the only Firefox entry (9) vanish; Mail is untouched.
+    // Pruning with expandedKeys should remove empty groups (firefox) and preserve multi-item groups (slack, mail).
+    std::unordered_set<std::string> expandedKeys = {"slack", "firefox", "mail"};
     const auto vanished = [](uint32_t id) { return id == 5 || id == 9; };
-    TEST_CHECK(notification_grouping::pruneGroups(groups, vanished));
+    TEST_CHECK(notification_grouping::pruneGroups(groups, vanished, &expandedKeys));
 
     TEST_CHECK(groups.size() == 2);
     TEST_CHECK(groups[0].appKey == "slack");
@@ -169,6 +183,16 @@ namespace {
     TEST_CHECK(groups[0].representativeId == 4);
     TEST_CHECK(groups[1].appKey == "mail");
     TEST_CHECK(groups[1].representativeId == 7);
+    TEST_CHECK(expandedKeys.contains("slack"));
+    TEST_CHECK(!expandedKeys.contains("firefox"));
+    TEST_CHECK(expandedKeys.contains("mail"));
+
+    // When mail shrinks to 1 item, it should also be pruned from expandedKeys.
+    const auto mailVanished = [](uint32_t id) { return id == 7; };
+    TEST_CHECK(notification_grouping::pruneGroups(groups, mailVanished, &expandedKeys));
+    TEST_CHECK(groups.size() == 2);
+    TEST_CHECK(groups[1].notificationIds.size() == 1);
+    TEST_CHECK(!expandedKeys.contains("mail"));
   }
 
 } // namespace
