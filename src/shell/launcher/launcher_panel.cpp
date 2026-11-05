@@ -2059,7 +2059,7 @@ void LauncherPanel::animateResultsTransition() {
         viewport->setPosition(m_resultsTransitionBaseX, viewport->y());
         m_resultsTransitionActive = false;
       },
-      viewport
+      viewport, AnimationKind::Launcher
   );
 }
 

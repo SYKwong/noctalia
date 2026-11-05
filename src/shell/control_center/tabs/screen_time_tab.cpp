@@ -565,7 +565,7 @@ void ScreenTimeTab::beginRangeSlideOut(int nextRangeDays) {
         m_startRangeSlideIn = true;
         PanelManager::instance().refresh();
       },
-      m_root
+      m_root, AnimationKind::Panels
   );
 }
 
@@ -590,7 +590,7 @@ void ScreenTimeTab::beginRangeSlideIn() {
           m_scroll->setOpacity(1.0F);
         }
       },
-      m_root
+      m_root, AnimationKind::Panels
   );
 }
 

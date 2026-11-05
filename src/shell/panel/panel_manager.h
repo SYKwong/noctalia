@@ -201,6 +201,7 @@ private:
   void applyDetachedReveal(float progress);
   void startAttachedOpenAnimation();
   void publishAttachedPanelGeometry(float revealProgress);
+  [[nodiscard]] AnimationKind activePanelAnimationKind() const noexcept;
   // Restyle the attached-panel decoration nodes (bg fill, drop shadow, contact shadow)
   // using the cached attached background opacity and bar position. Geometry/positions are not touched.
   // Safe to call any time after buildScene has run.

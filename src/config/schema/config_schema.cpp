@@ -1440,6 +1440,11 @@ namespace noctalia::config::schema {
       static const Schema<ShellConfig::AnimationConfig> s = {
           field(&ShellConfig::AnimationConfig::enabled, "enabled"),
           field(&ShellConfig::AnimationConfig::speed, "speed", kAnimationSpeedRange),
+          field(&ShellConfig::AnimationConfig::launcher, "launcher"),
+          field(&ShellConfig::AnimationConfig::panels, "panels"),
+          field(&ShellConfig::AnimationConfig::bar, "bar"),
+          field(&ShellConfig::AnimationConfig::widgets, "widgets"),
+          field(&ShellConfig::AnimationConfig::dock, "dock"),
       };
       return s;
     }

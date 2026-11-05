@@ -14,24 +14,30 @@ AnimationManager::~AnimationManager() { MotionService::instance().unregisterMana
 
 AnimationManager::Id AnimationManager::animate(
     float from, float to, float durationMs, Easing easing, std::function<void(float)> setter,
-    std::function<void()> onComplete, const void* owner
+    std::function<void()> onComplete, const void* owner, AnimationKind kind
 ) {
-  return animateInternal(from, to, durationMs, easing, std::move(setter), std::move(onComplete), owner, true, true);
+  return animateInternal(
+      from, to, durationMs, easing, std::move(setter), std::move(onComplete), owner, true, true, kind
+  );
 }
 
 AnimationManager::Id AnimationManager::animateTimer(
     float from, float to, float durationMs, Easing easing, std::function<void(float)> setter,
     std::function<void()> onComplete, const void* owner
 ) {
-  return animateInternal(from, to, durationMs, easing, std::move(setter), std::move(onComplete), owner, false, false);
+  return animateInternal(
+      from, to, durationMs, easing, std::move(setter), std::move(onComplete), owner, false, false,
+      AnimationKind::General
+  );
 }
 
 AnimationManager::Id AnimationManager::animateInternal(
     float from, float to, float durationMs, Easing easing, std::function<void(float)> setter,
-    std::function<void()> onComplete, const void* owner, bool scaleDuration, bool respectMotionEnabled
+    std::function<void()> onComplete, const void* owner, bool scaleDuration, bool respectMotionEnabled,
+    AnimationKind kind
 ) {
   const auto& motion = MotionService::instance();
-  const bool reduceMotion = respectMotionEnabled && !motion.enabled();
+  const bool reduceMotion = respectMotionEnabled && !motion.enabled(kind);
   if (reduceMotion) {
     if (setter) {
       setter(to);
@@ -63,6 +69,7 @@ AnimationManager::Id AnimationManager::animateInternal(
           .id = id,
           .owner = owner,
           .respectMotionEnabled = respectMotionEnabled,
+          .kind = kind,
           .animation = Animation{
               .startValue = reduceMotion ? to : from,
               .endValue = to,
@@ -87,10 +94,13 @@ void AnimationManager::cancel(Id id) {
 
 void AnimationManager::cancelAll() { m_animations.clear(); }
 
-void AnimationManager::reduceMotion() {
+void AnimationManager::reduceMotion(AnimationKind kind) {
   const auto now = std::chrono::steady_clock::now();
   for (auto& entry : m_animations) {
     if (!entry.respectMotionEnabled || entry.animation.finished) {
+      continue;
+    }
+    if (kind != AnimationKind::General && entry.kind != kind) {
       continue;
     }
 

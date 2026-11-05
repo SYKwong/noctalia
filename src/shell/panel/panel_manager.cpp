@@ -1544,7 +1544,7 @@ void PanelManager::closePanel(bool animateClose) {
               }
             });
           },
-          m_attachedRevealClipNode
+          m_attachedRevealClipNode, activePanelAnimationKind()
       );
     } else {
       m_animations.cancelForOwner(m_sceneRoot.get());
@@ -1558,7 +1558,7 @@ void PanelManager::closePanel(bool animateClose) {
               }
             });
           },
-          m_sceneRoot.get()
+          m_sceneRoot.get(), activePanelAnimationKind()
       );
     }
     m_surface->requestRedraw();
@@ -2370,8 +2370,12 @@ void PanelManager::startAttachedOpenAnimation() {
   m_attachedOpenAnimationPending = false;
   m_animations.animate(
       m_attachedRevealProgress, 1.0F, Style::animNormal, Easing::EaseOutCubic,
-      [this](float v) { applyAttachedReveal(v); }, {}, m_attachedRevealClipNode
+      [this](float v) { applyAttachedReveal(v); }, {}, m_attachedRevealClipNode, activePanelAnimationKind()
   );
+}
+
+AnimationKind PanelManager::activePanelAnimationKind() const noexcept {
+  return m_activePanelId == "launcher" ? AnimationKind::Launcher : AnimationKind::Panels;
 }
 
 void PanelManager::publishAttachedPanelGeometry(float revealProgress) {
@@ -2790,7 +2794,7 @@ void PanelManager::buildScene(std::uint32_t width, std::uint32_t height) {
       applyDetachedReveal(0.0F);
       m_animations.animate(
           0.0F, 1.0F, Style::animNormal, Easing::EaseOutCubic, [this](float v) { applyDetachedReveal(v); }, {},
-          m_sceneRoot.get()
+          m_sceneRoot.get(), activePanelAnimationKind()
       );
     }
 
@@ -2977,7 +2981,7 @@ void PanelManager::layoutActivePanel(Renderer& renderer) {
               placePanelChrome();
             }
           },
-          [this] { m_contentFit.animation = 0; }, m_sceneRoot.get()
+          [this] { m_contentFit.animation = 0; }, m_sceneRoot.get(), activePanelAnimationKind()
       );
     }
     placePanelChrome();

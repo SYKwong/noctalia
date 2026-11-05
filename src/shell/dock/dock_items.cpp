@@ -348,7 +348,7 @@ namespace {
           *visualScalePtr = value;
           node->setScale(value);
         },
-        [animIdPtr = &animId] { *animIdPtr = 0; }
+        [animIdPtr = &animId] { *animIdPtr = 0; }, nullptr, AnimationKind::Dock
     );
   }
 
@@ -907,7 +907,7 @@ namespace shell::dock {
                   itemPtr->visualOpacity = value;
                   node->setOpacity(value);
                 },
-                [itemPtr = &item] { itemPtr->opacityAnimId = 0; }
+                [itemPtr = &item] { itemPtr->opacityAnimId = 0; }, nullptr, AnimationKind::Dock
             );
           }
         }

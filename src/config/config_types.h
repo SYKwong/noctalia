@@ -1118,6 +1118,11 @@ struct ShellConfig {
   struct AnimationConfig {
     bool enabled = true;
     float speed = 1.0F;
+    bool launcher = true;
+    bool panels = true;
+    bool bar = true;
+    bool widgets = true;
+    bool dock = true;
 
     bool operator==(const AnimationConfig&) const = default;
   };

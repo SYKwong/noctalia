@@ -542,7 +542,7 @@ void TrayWidget::rebuild(Renderer& renderer) {
             hoverBoxPtr->setFill(c);
             requestRedraw();
           },
-          {}, hoverBoxPtr
+          {}, hoverBoxPtr, AnimationKind::Widgets
       );
       requestFrameTick();
     });
@@ -562,7 +562,7 @@ void TrayWidget::rebuild(Renderer& renderer) {
             hoverBoxPtr->setFill(c);
             requestRedraw();
           },
-          {}, hoverBoxPtr
+          {}, hoverBoxPtr, AnimationKind::Widgets
       );
       requestFrameTick();
     });

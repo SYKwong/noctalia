@@ -467,7 +467,7 @@ void BatteryWidget::syncState(Renderer& renderer) {
             updateFillGeometry();
             requestRedraw();
           },
-          [this] { m_fillAnim = 0; }, this
+          [this] { m_fillAnim = 0; }, this, AnimationKind::Widgets
       );
       requestFrameTick();
     } else {

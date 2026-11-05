@@ -315,7 +315,7 @@ namespace shell::dock {
         instance.hideOpacity = 1.0F;
         instance.animations.animate(
             0.0F, 1.0F, Style::animSlow, Easing::EaseOutCubic,
-            [slide = instance.slideRoot](float v) { slide->setOpacity(v); }, {}, instance.slideRoot
+            [slide = instance.slideRoot](float v) { slide->setOpacity(v); }, {}, instance.slideRoot, AnimationKind::Dock
         );
       }
 
@@ -466,7 +466,7 @@ namespace shell::dock {
           syncDockSlideLayerTransform(inst, inst.config);
           applyDockCompositorBlur(inst, inst.config);
         },
-        [&inst] { inst.hideAnimId = 0; }
+        [&inst] { inst.hideAnimId = 0; }, nullptr, AnimationKind::Dock
     );
     syncDockAutoHideInputRegion(inst, cfg);
     inst.surface->requestRedraw();
@@ -489,7 +489,7 @@ namespace shell::dock {
           syncDockSlideLayerTransform(inst, inst.config);
           applyDockCompositorBlur(inst, inst.config);
         },
-        [&inst] { inst.hideAnimId = 0; }
+        [&inst] { inst.hideAnimId = 0; }, nullptr, AnimationKind::Dock
     );
     syncDockAutoHideInputRegion(inst, inst.config);
     if (inst.surface) {

@@ -678,7 +678,8 @@ void WorkspacesWidget::rebuild(Renderer& renderer) {
 
         m_animations->cancelForOwner(&m_hoverProgress);
         m_animations->animate(
-            m_hoverProgress, 1.0F, Style::animFast, Easing::EaseOutCubic, applyHoverProgress, {}, &m_hoverProgress
+            m_hoverProgress, 1.0F, Style::animFast, Easing::EaseOutCubic, applyHoverProgress, {}, &m_hoverProgress,
+            AnimationKind::Widgets
         );
         requestFrameTick();
       });
@@ -710,7 +711,8 @@ void WorkspacesWidget::rebuild(Renderer& renderer) {
 
         m_animations->cancelForOwner(&m_hoverProgress);
         m_animations->animate(
-            m_hoverProgress, 0.0F, Style::animFast, Easing::EaseOutCubic, applyHoverProgress, {}, &m_hoverProgress
+            m_hoverProgress, 0.0F, Style::animFast, Easing::EaseOutCubic, applyHoverProgress, {}, &m_hoverProgress,
+            AnimationKind::Widgets
         );
         requestFrameTick();
       });
@@ -1052,7 +1054,7 @@ void WorkspacesWidget::startAnimation() {
           root()->markPaintDirty();
         }
       },
-      [this] { finishAnimation(); }, this
+      [this] { finishAnimation(); }, this, AnimationKind::Widgets
   );
 
   // Reserve final bounds before the first animated frame to avoid one-frame overflow.

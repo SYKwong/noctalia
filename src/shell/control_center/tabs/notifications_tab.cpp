@@ -1099,7 +1099,7 @@ void NotificationsTab::beginFilterSlideOut(std::size_t nextIndex) {
         m_startFilterSlideIn = true;
         PanelManager::instance().requestLayout();
       },
-      m_list
+      m_list, AnimationKind::Panels
   );
 }
 
@@ -1127,7 +1127,7 @@ void NotificationsTab::beginFilterSlideIn() {
           m_list->setOpacity(1.0F);
         }
       },
-      m_list
+      m_list, AnimationKind::Panels
   );
 }
 

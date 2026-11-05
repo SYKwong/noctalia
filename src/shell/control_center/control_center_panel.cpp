@@ -738,7 +738,7 @@ void ControlCenterPanel::startTabTransition(TabId from, TabId to) {
         PanelManager::instance().requestLayout();
         PanelManager::instance().requestRedraw();
       },
-      m_tabBodies
+      m_tabBodies, AnimationKind::Panels
   );
 }
 

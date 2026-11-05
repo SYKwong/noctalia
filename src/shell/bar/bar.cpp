@@ -2038,7 +2038,7 @@ void Bar::setInstanceIpcVisible(BarInstance& instance, bool visible) {
           inst->surface->requestRedraw();
         }
       },
-      instance.slideRoot
+      instance.slideRoot, AnimationKind::Bar
   );
   syncBarAutoHideInputRegion(instance);
   syncBarSurfaceChrome(instance);
@@ -3046,7 +3046,7 @@ void Bar::animateWidgetHoverHighlight(BarInstance& instance, Widget& widget, boo
         box->setVisible(progress > 0.001F);
         box->setFill(scaleAlpha(fill, kWidgetHoverFillAlpha * progress));
       },
-      {}, box
+      {}, box, AnimationKind::Bar
   );
   if (instance.surface != nullptr) {
     instance.surface->requestRedraw();
@@ -3064,7 +3064,7 @@ void Bar::beginAccordionAnimation(BarInstance& instance, BarCapsuleRun& run, boo
           surface->requestLayout();
         }
       },
-      {}, run.shell
+      {}, run.shell, AnimationKind::Bar
   );
 }
 
@@ -3134,7 +3134,7 @@ void Bar::beginWidgetPeekAnimation(BarInstance& instance, Widget& widget, bool e
           surface->requestLayout();
         }
       },
-      {}, widget.peekAnimationOwner()
+      {}, widget.peekAnimationOwner(), AnimationKind::Bar
   );
   // animate() only queues; the first tick needs a frame requested here.
   if (instance.surface != nullptr) {
@@ -3357,7 +3357,7 @@ void Bar::revealAutoHideBar(BarInstance& instance) {
         syncBarSlideLayerTransform(*inst);
         syncBarSurfaceChrome(*inst);
       },
-      notifyAttachedPanel, instance.slideRoot
+      notifyAttachedPanel, instance.slideRoot, AnimationKind::Bar
   );
   const int surfW = static_cast<int>(instance.surface->width());
   const int surfH = static_cast<int>(instance.surface->height());
@@ -3457,7 +3457,7 @@ void Bar::startHideFadeOut(BarInstance& instance, bool immediate) {
         syncBarSurfaceChrome(*inst);
         inst->surface->requestRedraw();
       },
-      instance.slideRoot
+      instance.slideRoot, AnimationKind::Bar
   );
   syncBarSurfaceChrome(instance);
   if (instance.surface != nullptr) {
@@ -4278,7 +4278,7 @@ std::string Bar::setBarAutoHideIpc(std::string_view args) {
               inst->surface->requestRedraw();
             }
           },
-          instance.slideRoot
+          instance.slideRoot, AnimationKind::Bar
       );
       if (instance.surface != nullptr) {
         instance.surface->requestRedraw();

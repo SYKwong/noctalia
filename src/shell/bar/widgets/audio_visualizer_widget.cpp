@@ -235,7 +235,7 @@ void AudioVisualizerWidget::startOpacityAnimation(float targetOpacity, bool coll
         }
         requestUpdate();
       },
-      this
+      this, AnimationKind::Widgets
   );
   requestRedraw();
 }

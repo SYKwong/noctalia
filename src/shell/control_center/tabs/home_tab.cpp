@@ -1218,7 +1218,7 @@ void HomeTab::startCrispFade() {
         syncWallpaperLayerVisibility();
         PanelManager::instance().requestRedraw();
       },
-      crisp
+      crisp, AnimationKind::Panels
   );
 }
 

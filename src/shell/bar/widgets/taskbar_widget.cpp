@@ -6,6 +6,7 @@
 #include "config/config_service.h"
 #include "core/deferred_call.h"
 #include "i18n/i18n.h"
+#include "render/animation/animation.h"
 #include "render/core/color.h"
 #include "render/core/renderer.h"
 #include "render/scene/input_area.h"
@@ -945,7 +946,7 @@ void TaskbarWidget::buildTaskButtons(Renderer& renderer) {
             hoverBoxPtr->setFill(c);
             requestRedraw();
           },
-          {}, hoverBoxPtr
+          {}, hoverBoxPtr, AnimationKind::Widgets
       );
       requestFrameTick();
     });
@@ -964,7 +965,7 @@ void TaskbarWidget::buildTaskButtons(Renderer& renderer) {
             hoverBoxPtr->setFill(c);
             requestRedraw();
           },
-          {}, hoverBoxPtr
+          {}, hoverBoxPtr, AnimationKind::Widgets
       );
       requestFrameTick();
     });

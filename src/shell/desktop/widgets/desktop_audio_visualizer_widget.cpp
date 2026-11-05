@@ -340,7 +340,7 @@ void DesktopAudioVisualizerWidget::startOpacityAnimation(float targetOpacity, bo
         }
         requestLayout();
       },
-      this
+      this, AnimationKind::Widgets
   );
   requestFrameTick();
 }

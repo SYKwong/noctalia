@@ -57,6 +57,11 @@ screen_filter_regex = ""             # screen-sharing app names to ignore in pri
 [shell.animation]
 enabled = true
 speed   = 1.0                       # 0.5 = 2× slower, 2.0 = 2× faster
+launcher = true                     # application launcher open/close/filter transitions
+panels  = true                      # control center, calendar, settings, session panels
+bar     = true                      # bar autohide slide, hover highlight, accordion unfold, peek reveal
+widgets = true                      # workspace pill transitions, tray/taskbar inline drawer, visualizers
+dock    = true                      # dock autohide slide, item add/remove/opacity transitions
 
 [shell.shadow]
 direction = "down"                  # center, up, down, left, right, up_left, up_right, down_left, down_right

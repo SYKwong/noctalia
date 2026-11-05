@@ -541,8 +541,14 @@ void Application::initStyleThemeAndWayland() {
 
   auto applyMotionConfig = [this] {
     auto& motion = MotionService::instance();
-    motion.setSpeed(m_configService.config().shell.animation.speed);
-    motion.setEnabled(m_configService.config().shell.animation.enabled);
+    const auto& anim = m_configService.config().shell.animation;
+    motion.setSpeed(anim.speed);
+    motion.setEnabled(anim.enabled);
+    motion.setLauncherEnabled(anim.launcher);
+    motion.setPanelsEnabled(anim.panels);
+    motion.setBarEnabled(anim.bar);
+    motion.setWidgetsEnabled(anim.widgets);
+    motion.setDockEnabled(anim.dock);
   };
   auto applyStyleConfig = [this, lastCornerRadiusScale = std::numeric_limits<float>::quiet_NaN()] mutable {
     const float corner = m_configService.config().shell.cornerRadiusScale;

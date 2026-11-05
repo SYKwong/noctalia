@@ -502,7 +502,7 @@ void WeatherTab::beginForecastSlideOut(ForecastView nextView) {
         m_startForecastSlideIn = true;
         PanelManager::instance().refresh();
       },
-      m_forecastColumn
+      m_forecastColumn, AnimationKind::Panels
   );
 }
 
@@ -527,7 +527,7 @@ void WeatherTab::beginForecastSlideIn() {
           m_forecastRowsContainer->setOpacity(1.0F);
         }
       },
-      m_forecastColumn
+      m_forecastColumn, AnimationKind::Panels
   );
 }
 

@@ -449,7 +449,7 @@ void CalendarTab::beginSlideOut(int delta) {
         m_startMonthSlideIn = true;
         PanelManager::instance().refresh();
       },
-      m_gridViewport
+      m_gridViewport, AnimationKind::Panels
   );
 }
 
@@ -474,7 +474,7 @@ void CalendarTab::beginSlideIn() {
           m_grid->setOpacity(1.0F);
         }
       },
-      m_gridViewport
+      m_gridViewport, AnimationKind::Panels
   );
 }
 

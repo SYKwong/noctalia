@@ -388,7 +388,7 @@ void DesktopFancyAudioVisualizerWidget::startOpacityAnimation(float targetOpacit
         setVisibilityCollapsed(true);
         requestRedraw();
       },
-      this
+      this, AnimationKind::Widgets
   );
   requestFrameTick();
 }

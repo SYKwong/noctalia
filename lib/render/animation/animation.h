@@ -14,6 +14,15 @@ enum class Easing : std::uint8_t {
   EaseOutBack,
 };
 
+enum class AnimationKind : std::uint8_t {
+  General,
+  Launcher,
+  Panels,
+  Bar,
+  Widgets,
+  Dock,
+};
+
 float applyEasing(Easing easing, float t);
 
 struct Animation {
